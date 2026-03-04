@@ -1,7 +1,17 @@
 {
   "name": "azam-ahmad-honda",
   "compatibility_date": "2026-03-05",
-  "workers_dev": true,
+  "workers_dev": false,
+  "routes": [
+    {
+      "pattern": "azamahmad.com",
+      "custom_domain": true
+    },
+    {
+      "pattern": "www.azamahmad.com",
+      "custom_domain": true
+    }
+  ],
   "assets": {
     "directory": "./public"
   },

@@ -39,6 +39,11 @@ const GALLERY_IMAGES = [
   "assets/gallery/WhatsApp Image 2026-02-28 at 9.06.46 PM.jpeg",
 ];
 
+const AWARDS_IMAGES = [
+  "assets/awards/Screenshot%202026-03-05%20at%206.00.19%E2%80%AFAM.png",
+  "assets/awards/Screenshot%202026-03-05%20at%206.00.41%E2%80%AFAM.png",
+];
+
 const models = [
   {
     name: "City",
@@ -472,6 +477,181 @@ function setupGalleryCarousel() {
   update();
 }
 
+function setupAwardsCarousel() {
+  const track = document.getElementById("awardsTrack");
+  const dotsWrap = document.getElementById("awardsDots");
+  const prevButton = document.getElementById("awardsPrev");
+  const nextButton = document.getElementById("awardsNext");
+  const counter = document.getElementById("awardsCounter");
+
+  if (!track || !dotsWrap || !prevButton || !nextButton) {
+    return;
+  }
+
+  if (!AWARDS_IMAGES.length) {
+    track.innerHTML = '<p class="p-6 text-center text-sm text-slate-500">Anugerah akan dikemas kini tidak lama lagi.</p>';
+    prevButton.hidden = true;
+    nextButton.hidden = true;
+    return;
+  }
+
+  const imageFragment = document.createDocumentFragment();
+  const dotFragment = document.createDocumentFragment();
+  const total = AWARDS_IMAGES.length;
+  const maxVisibleDots = 5;
+  const visibleDotCount = Math.min(total, maxVisibleDots);
+
+  AWARDS_IMAGES.forEach((src, index) => {
+    const slide = document.createElement("figure");
+    slide.className = "gallery-slide";
+
+    const image = document.createElement("img");
+    image.src = src;
+    image.alt = `Anugerah Honda ${index + 1}`;
+    image.loading = index === 0 ? "eager" : "lazy";
+    image.decoding = "async";
+    image.className = "gallery-image awards-image is-contain";
+
+    const applyAdaptiveFit = () => {
+      const width = image.naturalWidth || 0;
+      const height = image.naturalHeight || 0;
+      const ratio = height > 0 ? width / height : 1;
+      const isSmallImage = width < 1200 || height < 700;
+      const isExtremeRatio = ratio > 2.2 || ratio < 0.9;
+      const useContain = isSmallImage || isExtremeRatio;
+
+      image.classList.toggle("is-contain", useContain);
+      image.classList.toggle("is-cover", !useContain);
+    };
+
+    if (image.complete) {
+      applyAdaptiveFit();
+    } else {
+      image.addEventListener("load", applyAdaptiveFit, { once: true });
+    }
+
+    slide.appendChild(image);
+    imageFragment.appendChild(slide);
+  });
+
+  for (let index = 0; index < visibleDotCount; index += 1) {
+    const dot = document.createElement("button");
+    dot.type = "button";
+    dot.className = "gallery-dot";
+    dot.setAttribute("aria-label", `Pergi ke gambar anugerah ${index + 1}`);
+    dot.dataset.index = String(index);
+    dotFragment.appendChild(dot);
+  }
+
+  track.innerHTML = "";
+  dotsWrap.innerHTML = "";
+  track.appendChild(imageFragment);
+  dotsWrap.appendChild(dotFragment);
+
+  const dots = Array.from(dotsWrap.querySelectorAll(".gallery-dot"));
+  let currentIndex = 0;
+  let startX = null;
+
+  const update = () => {
+    track.style.transform = `translateX(-${currentIndex * 100}%)`;
+    const start =
+      total <= visibleDotCount
+        ? 0
+        : Math.min(Math.max(currentIndex - Math.floor(visibleDotCount / 2), 0), total - visibleDotCount);
+
+    dots.forEach((dot, slot) => {
+      const realIndex = start + slot;
+      dot.dataset.index = String(realIndex);
+      dot.setAttribute("aria-label", `Pergi ke gambar anugerah ${realIndex + 1}`);
+      dot.classList.toggle("is-active", realIndex === currentIndex);
+      const edgeHint =
+        total > visibleDotCount &&
+        ((slot === 0 && start > 0) || (slot === visibleDotCount - 1 && start < total - visibleDotCount));
+      dot.classList.toggle("is-edge", edgeHint);
+    });
+    if (counter) {
+      counter.textContent = `${currentIndex + 1} / ${total}`;
+    }
+  };
+
+  const goTo = (index) => {
+    currentIndex = (index + total) % total;
+    update();
+  };
+
+  prevButton.addEventListener("click", () => goTo(currentIndex - 1));
+  nextButton.addEventListener("click", () => goTo(currentIndex + 1));
+
+  dots.forEach((dot) => {
+    dot.addEventListener("click", () => {
+      const targetIndex = Number.parseInt(dot.dataset.index || "0", 10);
+      goTo(Number.isNaN(targetIndex) ? 0 : targetIndex);
+    });
+  });
+
+  const viewport = track.parentElement;
+  if (viewport) {
+    const handleSwipeEnd = (endX) => {
+      if (startX === null) {
+        return;
+      }
+      const deltaX = endX - startX;
+      startX = null;
+      if (Math.abs(deltaX) > 40) {
+        goTo(deltaX < 0 ? currentIndex + 1 : currentIndex - 1);
+      }
+    };
+
+    if ("PointerEvent" in window) {
+      viewport.addEventListener(
+        "pointerdown",
+        (event) => {
+          if (event.pointerType === "touch" || event.pointerType === "pen") {
+            startX = event.clientX;
+          }
+        },
+        { passive: true }
+      );
+
+      viewport.addEventListener(
+        "pointerup",
+        (event) => {
+          if (event.pointerType === "touch" || event.pointerType === "pen") {
+            handleSwipeEnd(event.clientX);
+          }
+        },
+        { passive: true }
+      );
+
+      viewport.addEventListener(
+        "pointercancel",
+        () => {
+          startX = null;
+        },
+        { passive: true }
+      );
+    } else {
+      viewport.addEventListener(
+        "touchstart",
+        (event) => {
+          startX = event.changedTouches[0].clientX;
+        },
+        { passive: true }
+      );
+
+      viewport.addEventListener(
+        "touchend",
+        (event) => {
+          handleSwipeEnd(event.changedTouches[0].clientX);
+        },
+        { passive: true }
+      );
+    }
+  }
+
+  update();
+}
+
 function setupBackToTop() {
   const button = document.getElementById("backToTop");
   if (!button) {
@@ -637,6 +817,7 @@ function setupQualifierForm() {
 function initializePage() {
   renderModelCards();
   setupGalleryCarousel();
+  setupAwardsCarousel();
   setupProofStrip();
   setupQualifierForm();
   setupMobileMenu();

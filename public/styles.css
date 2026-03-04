@@ -93,6 +93,23 @@ details summary::-webkit-details-marker {
   -webkit-user-drag: none;
 }
 
+.awards-image {
+  background: #fff;
+  object-fit: contain;
+  object-position: center;
+  padding: 0.35rem;
+}
+
+.awards-image.is-cover {
+  object-fit: cover;
+  padding: 0;
+}
+
+.awards-image.is-contain {
+  object-fit: contain;
+  padding: 0.35rem;
+}
+
 .gallery-nav-btn {
   position: absolute;
   top: 50%;
